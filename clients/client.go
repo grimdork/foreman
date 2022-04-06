@@ -4,8 +4,6 @@ import "time"
 
 // Client contains fields common to all watchers.
 type Client struct {
-	// ID from the database.
-	ID int64
 	// Hostname is used in alerts.
 	Hostname string
 	// Interval to expect check-ins in seconds (default 60, give or take 2).
