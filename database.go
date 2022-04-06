@@ -200,12 +200,12 @@ func (srv *Server) GetCanary(hostname string) (*clients.Canary, error) {
 	srv.Lock()
 	defer srv.Unlock()
 	canary := clients.NewCanary(hostname, 0, "")
-	sql := `select interval,last_check,failed,status,acknowledgement,assignee,key
-from clients as c inner join keys on key=key
-where exists (select name from keys k where c.hostname = k.name) where c.hostname=$1`
+	sql := `select interval,last_check,failed,status,acknowledgement,assignee,key from clients as c
+inner join keys on c.hostname=name
+where exists (select name from keys k where c.hostname = k.name) and c.hostname=$1`
 	err := srv.db.QueryRow(context.Background(), sql, hostname).Scan(
-		&canary.ID, &canary.Hostname, &canary.Interval, &canary.LastCheck, &canary.Failed,
-		&canary.Status, &canary.Acknowledgement, &canary.Assignee, &canary.Key,
+		&canary.Interval, &canary.LastCheck, &canary.Failed, &canary.Status,
+		&canary.Acknowledgement, &canary.Assignee, &canary.Key,
 	)
 	if err != nil {
 		return nil, err
