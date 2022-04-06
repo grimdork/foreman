@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -32,13 +33,20 @@ func (srv *Server) canariesGet(w http.ResponseWriter, r *http.Request) {
 // canaryGet endpoint.
 func (srv *Server) canaryGet(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	id := r.Header.Get("hostname")
-	if id == "" {
+	name := r.Header.Get("name")
+	if name == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error":"missing canaryid"}`))
+		w.Write([]byte(`{"error":"missing name"}`))
 		return
 	}
 
+	canary, err := srv.GetCanary(name)
+	fmt.Printf("Got canary %s: %+v\n", name, canary)
+	err = json.NewEncoder(w).Encode(canary)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"` + err.Error() + `"}`))
+	}
 }
 
 // canaryPost endpoint.
