@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sort"
 
@@ -142,7 +141,6 @@ where not exists (select name from keys k where c.hostname = k.name) and c.hostn
 		return nil, err
 	}
 
-	fmt.Printf("%+v\n", scout)
 	return scout, nil
 }
 

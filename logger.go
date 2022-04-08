@@ -1,6 +1,8 @@
 package main
 
-import ll "github.com/grimdork/loglines"
+import (
+	ll "github.com/grimdork/loglines"
+)
 
 func (srv *Server) startLogger() {
 	srv.log = make(chan string, 100)
