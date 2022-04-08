@@ -112,9 +112,6 @@ func NewServer() (*Server, error) {
 
 // Start serving based on environment variables.
 func (srv *Server) Start() error {
-	srv.Lock()
-	defer srv.Unlock()
-
 	addr := net.JoinHostPort(
 		os.Getenv("WEB_HOST"),
 		os.Getenv("WEB_PORT"),
@@ -125,6 +122,16 @@ func (srv *Server) Start() error {
 	}
 
 	srv.startLogger()
+	err = srv.LoadScouts()
+	if err != nil {
+		return err
+	}
+
+	err = srv.LoadCanaries()
+	if err != nil {
+		return err
+	}
+
 	srv.log <- fmt.Sprintf("Starting web server on http://%s", addr)
 	srv.Add(1)
 	go func() {

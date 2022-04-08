@@ -8,31 +8,32 @@ import (
 type Scout struct {
 	Client
 	// Port of the client. Assumes standard HTTPS if unspecified.
-	Port int
+	Port int16
 	// Tries made so far.
 	Tries uint8
+	log   chan string
 }
 
 // NewScout creates a new scout.
-func NewScout(hostname string, port int, interval int) *Scout {
+func NewScout(hostname string, logger chan string) *Scout {
 	return &Scout{
 		Client: Client{
 			Hostname: hostname,
-			Interval: interval,
 			Status:   api.StatusWaiting,
 			quit:     make(chan any),
 		},
-		Port: port,
+		log: logger,
 	}
 }
 
 // Start the checker.
-func (c *Scout) Start() {
-	c.quit = make(chan any)
+func (scout *Scout) Start() {
+	scout.quit = make(chan any)
 	go func() {
+		scout.log <- "Starting scout for " + scout.Hostname
 		for {
 			select {
-			case <-c.quit:
+			case <-scout.quit:
 				return
 			}
 		}
@@ -40,6 +41,6 @@ func (c *Scout) Start() {
 }
 
 // Stop the checker.
-func (c *Scout) Stop() {
-	close(c.quit)
+func (scout *Scout) Stop() {
+	close(scout.quit)
 }

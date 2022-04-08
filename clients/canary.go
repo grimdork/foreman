@@ -12,14 +12,12 @@ type Canary struct {
 }
 
 // NewCanary creates a new canary.
-func NewCanary(hostname string, interval int, key string) *Canary {
+func NewCanary(name string) *Canary {
 	return &Canary{
 		Client: Client{
-			Hostname: hostname,
-			Interval: interval,
+			Hostname: name,
 			Status:   api.StatusWaiting,
 			quit:     make(chan any),
 		},
-		Key: key,
 	}
 }
