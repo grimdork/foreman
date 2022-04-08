@@ -194,14 +194,14 @@ from clients as c inner join keys on c.hostname=name`
 }
 
 // GetCanary from the database.
-func (srv *Server) GetCanary(hostname string) (*clients.Canary, error) {
+func (srv *Server) GetCanary(name string) (*clients.Canary, error) {
 	srv.Lock()
 	defer srv.Unlock()
-	canary := clients.NewCanary(hostname, 0, "")
+	canary := &clients.Canary{Client: clients.Client{Hostname: name}}
 	sql := `select interval,last_check,failed,status,acknowledgement,assignee,key from clients as c
 inner join keys on c.hostname=name
 where exists (select name from keys k where c.hostname = k.name) and c.hostname=$1`
-	err := srv.db.QueryRow(context.Background(), sql, hostname).Scan(
+	err := srv.db.QueryRow(context.Background(), sql, name).Scan(
 		&canary.Interval, &canary.LastCheck, &canary.Failed, &canary.Status,
 		&canary.Acknowledgement, &canary.Assignee, &canary.Key,
 	)
