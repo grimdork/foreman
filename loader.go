@@ -34,7 +34,14 @@ func (srv *Server) LoadCanaries() error {
 
 	for _, e := range list.Canaries {
 		canary := clients.NewCanary(e.Hostname, srv.log)
-		canary.Port = e.Port
+		canary.Key = e.Key
+		canary.Interval = e.Interval
+		canary.LastCheck = e.LastCheck
+		canary.Failed = e.Failed
+		canary.Status = e.Status
+		canary.Acknowledgement = e.Acknowledgement
+		canary.Assignee = e.Assignee
+		srv.canaries[e.Hostname] = canary
 	}
 	return nil
 }
