@@ -10,7 +10,7 @@ func (srv *Server) LoadScouts() error {
 	}
 
 	for _, e := range list.Scouts {
-		scout := clients.NewScout(e.Hostname, srv.log)
+		scout := clients.NewScout(e.Hostname, srv.alerts, srv.capool)
 		scout.Port = e.Port
 		scout.Interval = e.Interval
 		scout.LastCheck = e.LastCheck
@@ -33,7 +33,7 @@ func (srv *Server) LoadCanaries() error {
 	}
 
 	for _, e := range list.Canaries {
-		canary := clients.NewCanary(e.Hostname, srv.log)
+		canary := clients.NewCanary(e.Hostname, srv.alerts)
 		canary.Key = e.Key
 		canary.Interval = e.Interval
 		canary.LastCheck = e.LastCheck

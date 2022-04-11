@@ -12,6 +12,30 @@ const (
 	StatusCritical
 )
 
+// Check failure types.
+const (
+	// FailOK means the check was successful.
+	FailOK uint8 = iota
+	// FailUnknownHost means the hostname was not found.
+	FailUnknownHost
+	// FailNoTLS means the host port is not secure.
+	FailNoTLS
+	// FailNoCert means the host certificate was not found or invalid.
+	FailNoCert
+)
+
+// Message is sent when status changes from or to OK.
+type Message struct {
+	// OldStatus is the previous status.
+	OldStatus uint8
+	// NewStatus is the new status. May be the same as old if it's just an update.
+	NewStatus uint8
+	// Type of error.
+	Type uint8
+	// Name of the monitored host.
+	Name string
+}
+
 // StatusString returns a string representation of the status.
 func StatusString(status uint8) string {
 	switch status {

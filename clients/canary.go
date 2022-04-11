@@ -8,18 +8,19 @@ import (
 type Canary struct {
 	Client
 	// Key is the client's secret key.
-	Key string
-	log chan string
+	Key    string
+	alerts chan api.Message
 }
 
 // NewCanary creates a new canary.
-func NewCanary(name string, log chan string) *Canary {
+func NewCanary(name string, alerts chan api.Message) *Canary {
 	return &Canary{
 		Client: Client{
 			Hostname: name,
+			Interval: 60,
 			Status:   api.StatusWaiting,
 			quit:     make(chan any),
 		},
-		log: log,
+		alerts: alerts,
 	}
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"crypto/x509"
 	"net"
 	"net/http"
 	"os"
@@ -22,15 +22,15 @@ type Server struct {
 	sync.RWMutex
 	sync.WaitGroup
 	http.Server
-	r  *chi.Mux
-	db *pgxpool.Pool
+	r      *chi.Mux
+	db     *pgxpool.Pool
+	capool *x509.CertPool
 
 	// All running scouts and canaries.
 	scouts   map[string]*clients.Scout
 	canaries map[string]*clients.Canary
 
-	log     chan string
-	err     chan string
+	alerts  chan api.Message
 	logquit chan any
 }
 
@@ -51,7 +51,13 @@ func NewServer() (*Server, error) {
 		canaries: make(map[string]*clients.Canary),
 	}
 
-	err := srv.openDB()
+	var err error
+	srv.capool, err = x509.SystemCertPool()
+	if err != nil {
+		return nil, err
+	}
+
+	err = srv.openDB()
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +127,7 @@ func (srv *Server) Start() error {
 		return err
 	}
 
-	srv.startLogger()
+	srv.startAlerter()
 	err = srv.LoadScouts()
 	if err != nil {
 		return err
@@ -132,7 +138,7 @@ func (srv *Server) Start() error {
 		return err
 	}
 
-	srv.log <- fmt.Sprintf("Starting web server on http://%s", addr)
+	ll.Msg("Starting web server on http://%s", addr)
 	srv.Add(1)
 	go func() {
 		srv.Handler = srv.r
@@ -142,7 +148,7 @@ func (srv *Server) Start() error {
 			ll.Err("Error running server: %s", err.Error())
 			os.Exit(2)
 		}
-		srv.log <- "Stopping web server."
+		ll.Msg("Stopping web server.")
 		srv.stopLogger()
 		srv.Done()
 	}()
