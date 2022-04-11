@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"sort"
+	"time"
 
 	"github.com/grimdork/foreman/api"
 	"github.com/grimdork/foreman/clients"
@@ -158,6 +159,15 @@ func (srv *Server) DeleteScout(hostname string) error {
 	srv.Lock()
 	defer srv.Unlock()
 	_, err := srv.db.Exec(context.Background(), "delete from clients where hostname=$1", hostname)
+	return err
+}
+
+// SetScoutFailure switches to a failure state.
+func (srv *Server) SetScoutFailure(hostname string, status uint8) error {
+	srv.Lock()
+	defer srv.Unlock()
+	sql := `update clients set failed=$2,status=$3 where hostname=$1`
+	_, err := srv.db.Exec(context.Background(), sql, hostname, time.Now(), status)
 	return err
 }
 
