@@ -112,14 +112,14 @@ type CanaryList struct {
 
 // CanaryListEntry is a condensed version of the Scout struct.
 type CanaryListEntry struct {
-	Hostname        string    `json:"hostname"`
-	Assignee        string    `json:"assignee"`
-	Key             string    `json:"key"`
-	LastCheck       time.Time `json:"lastcheck"`
-	Failed          time.Time `json:"failed"`
-	Interval        int       `json:"interval"`
-	Status          uint8     `json:"status"`
-	Acknowledgement bool      `json:"acknowledgement"`
+	Hostname  string    `json:"hostname"`
+	Assignee  string    `json:"assignee"`
+	Key       string    `json:"key"`
+	LastCheck time.Time `json:"lastcheck"`
+	Failed    time.Time `json:"failed"`
+	Assigned  time.Time `json:"assigned"`
+	Interval  int       `json:"interval"`
+	Status    uint8     `json:"status"`
 }
 
 // ScoutList structure.
@@ -129,14 +129,14 @@ type ScoutList struct {
 
 // ScoutListEntry is a condensed version of the Scout struct.
 type ScoutListEntry struct {
-	Hostname        string    `json:"hostname"`
-	Assignee        string    `json:"assignee"`
-	LastCheck       time.Time `json:"lastcheck"`
-	Failed          time.Time `json:"failed"`
-	Interval        int       `json:"interval"`
-	Port            int16     `json:"port"`
-	Status          uint8     `json:"status"`
-	Acknowledgement bool      `json:"acknowledgement"`
+	Hostname  string    `json:"hostname"`
+	Assignee  string    `json:"assignee"`
+	LastCheck time.Time `json:"lastcheck"`
+	Failed    time.Time `json:"failed"`
+	Assigned  time.Time `json:"assigned"`
+	Interval  int       `json:"interval"`
+	Port      int16     `json:"port"`
+	Status    uint8     `json:"status"`
 }
 
 // KeyList structure.

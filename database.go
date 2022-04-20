@@ -68,7 +68,7 @@ func (srv *Server) GetKey(name string) (api.Key, error) {
 
 	var key api.Key
 	err := srv.db.QueryRow(context.Background(),
-		"select key,expiry,admin from keys where name = $1",
+		"select key,expiry,admin from keys where name=$1",
 		name).Scan(&key.Key, &key.Expiry, &key.Admin)
 	if err != nil {
 		return api.Key{}, err
@@ -100,8 +100,7 @@ func (srv *Server) GetScouts() (api.ScoutList, error) {
 	srv.Lock()
 	defer srv.Unlock()
 	var list []api.ScoutListEntry
-	sql := `select hostname,port,interval,last_check,failed,status,acknowledgement,assignee
-from clients as c where not exists (select name from keys k where c.hostname = k.name)`
+	sql := `select hostname,port,interval,last_check,failed,status,assignee,assigned from scouts`
 	rows, err := srv.db.Query(context.Background(), sql)
 	if err != nil {
 		return api.ScoutList{}, err
@@ -112,7 +111,7 @@ from clients as c where not exists (select name from keys k where c.hostname = k
 		scout := api.ScoutListEntry{}
 		err := rows.Scan(
 			&scout.Hostname, &scout.Port, &scout.Interval, &scout.LastCheck,
-			&scout.Failed, &scout.Status, &scout.Acknowledgement, &scout.Assignee,
+			&scout.Failed, &scout.Status, &scout.Assignee, &scout.Assigned,
 		)
 		if err != nil {
 			return api.ScoutList{}, err
@@ -132,11 +131,10 @@ func (srv *Server) GetScout(hostname string) (*api.ScoutListEntry, error) {
 	srv.Lock()
 	defer srv.Unlock()
 	scout := &api.ScoutListEntry{Hostname: hostname}
-	sql := `select port,interval,last_check,failed,status,acknowledgement,assignee from clients as c
-where not exists (select name from keys k where c.hostname = k.name) and c.hostname=$1`
+	sql := `select port,interval,last_check,failed,status from scouts where hostname=$1`
 	err := srv.db.QueryRow(context.Background(), sql, hostname).Scan(
 		&scout.Port, &scout.Interval, &scout.LastCheck, &scout.Failed,
-		&scout.Status, &scout.Acknowledgement, &scout.Assignee,
+		&scout.Status,
 	)
 	if err != nil {
 		return nil, err
@@ -149,7 +147,7 @@ where not exists (select name from keys k where c.hostname = k.name) and c.hostn
 func (srv *Server) SetScout(hostname string, port, interval int) error {
 	srv.Lock()
 	defer srv.Unlock()
-	sql := `insert into clients (hostname,port,interval) values ($1,$2,$3) on conflict(hostname) do update set interval=$2`
+	sql := `insert into scouts (hostname,port,interval) values ($1,$2,$3) on conflict(hostname) do update set interval=$3`
 	_, err := srv.db.Exec(context.Background(), sql, hostname, port, interval)
 	return err
 }
@@ -158,7 +156,7 @@ func (srv *Server) SetScout(hostname string, port, interval int) error {
 func (srv *Server) DeleteScout(hostname string) error {
 	srv.Lock()
 	defer srv.Unlock()
-	_, err := srv.db.Exec(context.Background(), "delete from clients where hostname=$1", hostname)
+	_, err := srv.db.Exec(context.Background(), "delete from scouts where hostname=$1", hostname)
 	return err
 }
 
@@ -166,7 +164,7 @@ func (srv *Server) DeleteScout(hostname string) error {
 func (srv *Server) SetScoutFailure(hostname string, status uint8) error {
 	srv.Lock()
 	defer srv.Unlock()
-	sql := `update clients set failed=$2,status=$3 where hostname=$1`
+	sql := `update scouts set failed=$2,status=$3 where hostname=$1`
 	_, err := srv.db.Exec(context.Background(), sql, hostname, time.Now(), status)
 	return err
 }
@@ -176,8 +174,8 @@ func (srv *Server) GetCanaries() (api.CanaryList, error) {
 	srv.Lock()
 	defer srv.Unlock()
 	var list []api.CanaryListEntry
-	sql := `select hostname,interval,last_check,failed,status,acknowledgement,assignee,key
-from clients as c inner join keys on c.hostname=name`
+	sql := `select c.name,interval,last_check,failed,status,assignee,assigned,key
+from canaries as c left join keys as k on c.name=k.name`
 	rows, err := srv.db.Query(context.Background(), sql)
 	if err != nil {
 		return api.CanaryList{}, err
@@ -188,7 +186,7 @@ from clients as c inner join keys on c.hostname=name`
 		canary := api.CanaryListEntry{}
 		err := rows.Scan(
 			&canary.Hostname, &canary.Interval, &canary.LastCheck, &canary.Failed,
-			&canary.Status, &canary.Acknowledgement, &canary.Assignee, &canary.Key,
+			&canary.Status, &canary.Assignee, &canary.Assigned, &canary.Key,
 		)
 		if err != nil {
 			return api.CanaryList{}, err
@@ -208,12 +206,12 @@ func (srv *Server) GetCanary(name string) (*clients.Canary, error) {
 	srv.Lock()
 	defer srv.Unlock()
 	canary := &clients.Canary{Client: clients.Client{Hostname: name}}
-	sql := `select interval,last_check,failed,status,acknowledgement,assignee,key from clients as c
-inner join keys on c.hostname=name
-where exists (select name from keys k where c.hostname = k.name) and c.hostname=$1`
+	sql := `select interval,last_check,failed,status,assignee,assigned,key
+from canaries as c
+left join keys on c.name=name`
 	err := srv.db.QueryRow(context.Background(), sql, name).Scan(
 		&canary.Interval, &canary.LastCheck, &canary.Failed, &canary.Status,
-		&canary.Acknowledgement, &canary.Assignee, &canary.Key,
+		&canary.Assignee, &canary.Assigned, &canary.Key,
 	)
 	if err != nil {
 		return nil, err
@@ -226,7 +224,7 @@ where exists (select name from keys k where c.hostname = k.name) and c.hostname=
 func (srv *Server) SetCanary(name string, interval int) error {
 	srv.Lock()
 	defer srv.Unlock()
-	sql := `insert into clients(hostname,interval) values($1,$2) on conflict(hostname) do update set interval=$2`
+	sql := `insert into canaries(name,interval) values($1,$2) on conflict(name) do update set interval=$2`
 	_, err := srv.db.Exec(context.Background(), sql, name, interval)
 	return err
 }
@@ -235,7 +233,7 @@ func (srv *Server) SetCanary(name string, interval int) error {
 func (srv *Server) DeleteCanary(name string) error {
 	srv.Lock()
 	defer srv.Unlock()
-	_, err := srv.db.Exec(context.Background(), "delete from clients where hostname=$1", name)
+	_, err := srv.db.Exec(context.Background(), "delete from canaries where name=$1", name)
 	if err != nil {
 		return err
 	}

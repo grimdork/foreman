@@ -14,10 +14,10 @@ type Client struct {
 	Failed time.Time
 	// Status of the client.
 	Status uint8
-	// Acknowledgement of error status.
-	Acknowledgement bool
 	// Assignee of the acknowledged error.
 	Assignee string
+	// Assigned time
+	Assigned time.Time
 
 	quit chan any
 }

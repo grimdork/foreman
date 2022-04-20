@@ -1,6 +1,9 @@
 package main
 
-import "github.com/grimdork/foreman/clients"
+import (
+	"github.com/grimdork/foreman/clients"
+	ll "github.com/grimdork/loglines"
+)
 
 // LoadScouts loads all scouts from the database and starts watching.
 func (srv *Server) LoadScouts() error {
@@ -16,9 +19,10 @@ func (srv *Server) LoadScouts() error {
 		scout.LastCheck = e.LastCheck
 		scout.Failed = e.Failed
 		scout.Status = e.Status
-		scout.Acknowledgement = e.Acknowledgement
 		scout.Assignee = e.Assignee
+		scout.Assigned = e.Assigned
 		srv.scouts[e.Hostname] = scout
+		ll.Msg("Starting scout for %s", scout.Hostname)
 		scout.Start()
 	}
 
@@ -39,8 +43,8 @@ func (srv *Server) LoadCanaries() error {
 		canary.LastCheck = e.LastCheck
 		canary.Failed = e.Failed
 		canary.Status = e.Status
-		canary.Acknowledgement = e.Acknowledgement
 		canary.Assignee = e.Assignee
+		canary.Assigned = e.Assigned
 		srv.canaries[e.Hostname] = canary
 	}
 	return nil

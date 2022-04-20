@@ -38,7 +38,7 @@ func (cmd *CmdListCanaries) Run(in []string) error {
 
 	w := &tabwriter.Writer{}
 	w.Init(os.Stdout, 0, 8, 2, '\t', 0)
-	fmt.Fprint(w, "Host\tInterval\tStatus\tLast check\tFirst failure\tAck\tAssignee\n")
+	fmt.Fprint(w, "Host\tInterval\tStatus\tLast check\tFirst failure\tAssignee\tAssigned\n")
 	for _, c := range list.Canaries {
 		if c.Assignee == "" {
 			c.Assignee = "Nobody"
@@ -47,9 +47,9 @@ func (cmd *CmdListCanaries) Run(in []string) error {
 		if c.Status != api.StatusOK && c.Status != api.StatusWaiting {
 			fail = c.Failed.Local().Format(time.RFC822)
 		}
-		fmt.Fprintf(w, "%s\t%ds\t%s\t%s\t%s\t%t\t%s\n",
+		fmt.Fprintf(w, "%s\t%ds\t%s\t%s\t%s\t%s\t%s\n",
 			c.Hostname, c.Interval, api.StatusString(c.Status),
-			c.LastCheck.Local().Format(time.RFC822), fail, c.Acknowledgement, c.Assignee,
+			c.LastCheck.Local().Format(time.RFC822), fail, c.Assignee, c.Assigned.String(),
 		)
 	}
 
@@ -94,9 +94,9 @@ func (cmd *CmdListScouts) Run(in []string) error {
 		if s.Status != api.StatusOK && s.Status != api.StatusWaiting {
 			fail = s.Failed.Local().Format(time.RFC822)
 		}
-		fmt.Fprintf(w, "%s\t%d\t%ds\t%s\t%s\t%s\t%t\t%s\n",
+		fmt.Fprintf(w, "%s\t%d\t%ds\t%s\t%s\t%s\t%s\t%s\n",
 			s.Hostname, s.Port, s.Interval, api.StatusString(s.Status),
-			s.LastCheck.Local().Format(time.RFC822), fail, s.Acknowledgement, s.Assignee,
+			s.LastCheck.Local().Format(time.RFC822), fail, s.Assignee, s.Assigned.String(),
 		)
 	}
 	w.Flush()
